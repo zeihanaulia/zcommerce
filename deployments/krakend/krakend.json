@@ -1,0 +1,37 @@
+{
+    "version": 2,
+    "timeout": "3000ms",
+    "cache_ttl": "300s",
+    "output_encoding": "json",
+    "name": "My Service APP",
+    "host": 8000,
+    "extra_config": {
+        "github_com/devopsfaith/krakend-gologging": {
+            "level": "ERROR",
+            "prefix": "[KRAKEND]",
+            "syslog": false,
+            "stdout": true,
+            "format": "default"
+        }
+    },
+    "endpoints": [
+        {
+            "endpoint": "/catalog",
+            "backend": [
+                {
+                    "url_pattern": "http://localhost:8001/catalog",
+                    "output_encoding": "json"
+                }
+            ]
+        },
+        {
+            "endpoint": "/order",
+            "backend": [
+                {
+                    "url_pattern": "http://localhost:8002/order",
+                    "output_encoding": "json"
+                }
+            ]
+        }
+    ]
+}
