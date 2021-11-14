@@ -3,6 +3,7 @@ package rest
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -24,7 +25,9 @@ func NewPaymentHandler(payment PaymentService) *PaymentHandler {
 
 func (p *PaymentHandler) Register(r chi.Router) {
 	r.Route("/payment", func(r chi.Router) {
-		r.Get("/{trxId}", func(rw http.ResponseWriter, r *http.Request) {})
+		r.Get("/{trxId}", func(rw http.ResponseWriter, r *http.Request) {
+			fmt.Println("payment page")
+		})
 		r.Post("/register", p.register)
 	})
 }

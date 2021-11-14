@@ -23,6 +23,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/spf13/cobra"
 	"github.com/zeihanaulia/zcommerce/adapter"
+	"github.com/zeihanaulia/zcommerce/internal/order/payment"
 	"github.com/zeihanaulia/zcommerce/internal/order/postgresql"
 	"github.com/zeihanaulia/zcommerce/internal/order/rest"
 	"github.com/zeihanaulia/zcommerce/internal/order/service"
@@ -43,8 +44,10 @@ var orderRestCmd = &cobra.Command{
 
 		// Repository
 		orders := postgresql.NewOrder(db)
+		payments := payment.NewPayment("http://localhost:8003")
+
 		// Service
-		scv := service.NewOrder(orders)
+		scv := service.NewOrder(orders, payments)
 
 		// Handler
 		handler := rest.NewOrderHandler(scv)

@@ -34,6 +34,10 @@ func (o *Order) SetStatus(val Status) {
 	o.Status = val
 }
 
+func (o *Order) SetPaymentTrxID(val string) {
+	o.PaymentTrxID = val
+}
+
 func (o *Order) ItemsToJSON() ([]byte, error) {
 	b, err := json.Marshal(o.Items)
 	if err != nil {

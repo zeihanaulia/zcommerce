@@ -3,6 +3,7 @@ package rest
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -12,7 +13,7 @@ import (
 
 type OrderService interface {
 	Placed(ctx context.Context, paymentTrxID string, items []order.Item, billing order.Billing) (order.Order, error)
-	Checkout(ctx context.Context, args order.Order) (string, error)
+	Checkout(ctx context.Context, args order.Order) (order.Order, error)
 }
 
 type OrderHandler struct {
@@ -65,9 +66,7 @@ func (o *OrderHandler) checkout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	renderResponse(w, CreateOrderResponse{
-		ID: resp,
-	}, http.StatusOK)
+	http.Redirect(w, r, fmt.Sprintf("http://localhost:8003/payment/%s", resp.PaymentTrxID), http.StatusSeeOther)
 }
 
 // CreateOrderRequest defines request for creating order
@@ -113,9 +112,10 @@ func (c *CreateOrderRequest) GetBilling() order.Billing {
 }
 
 type CreateOrderResponse struct {
-	ID           string `json:"id"`
-	TrxID        string `json:"trx_id"`
-	PaymentTrxID string `json:"paymeny_trx_id"`
+	Data struct {
+		TrxID        string `json:"trx_id"`
+		PaymentTrxID string `json:"paymeny_trx_id"`
+	} `json:"data"`
 }
 
 func (o *OrderHandler) create(w http.ResponseWriter, r *http.Request) {
@@ -130,8 +130,12 @@ func (o *OrderHandler) create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	renderResponse(w, CreateOrderResponse{
-		ID:           resp.ID,
-		TrxID:        resp.TrxID,
-		PaymentTrxID: resp.PaymentTrxID,
+		Data: struct {
+			TrxID        string "json:\"trx_id\""
+			PaymentTrxID string "json:\"paymeny_trx_id\""
+		}{
+			TrxID:        resp.TrxID,
+			PaymentTrxID: resp.PaymentTrxID,
+		},
 	}, http.StatusOK)
 }
