@@ -22,6 +22,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/spf13/cobra"
+	"github.com/zeihanaulia/zcommerce/adapter"
+	"github.com/zeihanaulia/zcommerce/internal/order/postgresql"
 	"github.com/zeihanaulia/zcommerce/internal/order/rest"
 	"github.com/zeihanaulia/zcommerce/internal/order/service"
 )
@@ -34,9 +36,15 @@ var orderRestCmd = &cobra.Command{
 		r := chi.NewRouter()
 
 		// Infrastructure
+		db, err := adapter.NewPostgreSQL()
+		if err != nil {
+			log.Println(err)
+		}
 
+		// Repository
+		orders := postgresql.NewOrder(db)
 		// Service
-		scv := service.NewOrder()
+		scv := service.NewOrder(orders)
 
 		// Handler
 		handler := rest.NewOrderHandler(scv)

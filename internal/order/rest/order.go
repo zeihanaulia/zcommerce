@@ -3,6 +3,7 @@ package rest
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -10,7 +11,8 @@ import (
 )
 
 type OrderService interface {
-	Create(ctx context.Context, paymentTrxID string, items []order.Item, billing order.Billing) (order.Order, error)
+	Placed(ctx context.Context, paymentTrxID string, items []order.Item, billing order.Billing) (order.Order, error)
+	Checkout(ctx context.Context, args order.Order) (string, error)
 }
 
 type OrderHandler struct {
@@ -23,21 +25,61 @@ func NewOrderHandler(svc OrderService) *OrderHandler {
 
 func (o *OrderHandler) Register(r chi.Router) {
 	r.Route("/order", func(r chi.Router) {
-		r.Post("/publish", o.create)
+		r.Post("/checkout", o.checkout)
+		r.Post("/placed", o.create)
 	})
+}
+
+func toItemDetail(req CreateOrderRequest) []order.Item {
+	var itemDetails = make([]order.Item, 0)
+	for _, i := range req.Items {
+		itemDetails = append(itemDetails, order.Item{
+			ID:        i.ID,
+			Name:      i.Name,
+			Qty:       i.Qty,
+			Uom:       i.Uom,
+			BasePrice: i.Price,
+		})
+	}
+	return itemDetails
+}
+
+func (o *OrderHandler) checkout(w http.ResponseWriter, r *http.Request) {
+	var req CreateOrderRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println(err)
+		return
+	}
+
+	itemDetails := toItemDetail(req)
+	resp, err := o.svc.Checkout(r.Context(), order.Order{
+		Items: itemDetails,
+		Billing: order.Billing{
+			Name:    req.Billing.Name,
+			Address: req.Billing.Address,
+		},
+		Status: "draft",
+	})
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	renderResponse(w, CreateOrderResponse{
+		ID: resp,
+	}, http.StatusOK)
 }
 
 // CreateOrderRequest defines request for creating order
 type CreateOrderRequest struct {
-	PaymentTrxID string `json:"payment_trx_id"`
-	Items        []struct {
-		ID        string  `json:"id"`
-		ShopID    int64   `json:"shop_id"`
-		SKU       string  `json:"sku"`
-		Name      string  `json:"name"`
-		Uom       string  `json:"uom"`
-		Qty       int64   `json:"qty"`
-		BasePrice float64 `json:"base_price"`
+	Items []struct {
+		ID     string  `json:"id"`
+		ShopID int64   `json:"shop_id"`
+		SKU    string  `json:"sku"`
+		Name   string  `json:"name"`
+		Uom    string  `json:"uom"`
+		Qty    int64   `json:"qty"`
+		Price  float64 `json:"price"`
 	}
 	Billing struct {
 		ID      string `json:"id"`
@@ -56,7 +98,7 @@ func (c *CreateOrderRequest) GetItems() []order.Item {
 			Name:      ii.Name,
 			Uom:       ii.Uom,
 			Qty:       ii.Qty,
-			BasePrice: ii.BasePrice,
+			BasePrice: ii.Price,
 		})
 	}
 	return items
@@ -82,7 +124,7 @@ func (o *OrderHandler) create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := o.svc.Create(r.Context(), req.PaymentTrxID, req.GetItems(), req.GetBilling())
+	resp, err := o.svc.Placed(r.Context(), "", req.GetItems(), req.GetBilling())
 	if err != nil {
 		return
 	}

@@ -1,17 +1,46 @@
 package order
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 )
+
+const (
+	STATUS_DRAFT    Status = "draft"
+	STATUS_PLACED   Status = "placed"
+	STATUS_CANCELED Status = "canceled"
+)
+
+type Status string
 
 // Order is represent object for creating new order
 type Order struct {
-	ID           string
-	TrxID        string
-	PaymentTrxID string
-	Items        []Item
-	Billing      Billing
+	ID           string  `json:"id"`
+	TrxID        string  `json:"trx_id"`
+	PaymentTrxID string  `json:"payment_trx_id"`
+	Items        []Item  `json:"items"`
+	Billing      Billing `json:"billing"`
+	Status       Status  `json:"status"`
+}
+
+func (o *Order) GenerateID() {
+	now := time.Now()
+	o.TrxID = fmt.Sprintf("SO-%v", now.Unix())
+}
+
+func (o *Order) SetStatus(val Status) {
+	o.Status = val
+}
+
+func (o *Order) ItemsToJSON() ([]byte, error) {
+	b, err := json.Marshal(o.Items)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	return b, nil
 }
 
 func (o *Order) Validate() error {
@@ -35,13 +64,13 @@ func (o *Order) Validate() error {
 
 // Item means the items from order
 type Item struct {
-	ID        string
-	ShopID    int64
-	SKU       string
-	Name      string
-	Uom       string
-	Qty       int64
-	BasePrice float64
+	ID        string  `json:"id"`
+	ShopID    int64   `json:"shop_id"`
+	SKU       string  `json:"sku"`
+	Name      string  `json:"name"`
+	Uom       string  `json:"uom"`
+	Qty       int64   `json:"qty"`
+	BasePrice float64 `json:"base_price"`
 }
 
 func (i *Item) validate() error {
