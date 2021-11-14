@@ -18,6 +18,10 @@ Ecommerce workflow sederhana, handle order dan payment page.
         - [x] choose payment type
         - [x] simulating payment process
 - Account Service
+    - Register
+        - Create Account
+    - Login
+        - Return token
 - Catalog Service
 
 ## Migrate

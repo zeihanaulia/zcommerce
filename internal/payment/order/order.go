@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
+	"time"
 )
 
 type Order struct {
@@ -32,9 +32,17 @@ func (o *Order) Placed(ctx context.Context, paymentTrxID string) error {
 	responseBody := bytes.NewBuffer(postBody)
 	url := fmt.Sprintf("%s/order/placed", o.host)
 	fmt.Println(url)
-	resp, err := http.Post(url, "application/json", responseBody)
+	client := &http.Client{
+		Timeout: time.Second * 10,
+	}
+	req, err := http.NewRequest("POST", url, responseBody)
 	if err != nil {
-		log.Fatalf("An Error Occured %v", err)
+		return fmt.Errorf("Got error %s", err.Error())
+	}
+	req.Header.Set("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.ereg1pNERs1tmvgEBK9OX0-pCCnGqOKHlk7b0fUDUc8")
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("Got error %s", err.Error())
 	}
 	defer resp.Body.Close()
 
