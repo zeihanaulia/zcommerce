@@ -12,6 +12,9 @@ type PaymentRepository interface {
 
 type OrderRepository interface {
 	Create(ctx context.Context, args order.Order) (order.Order, error)
+	UpdateStatusOrder(ctx context.Context, paymentTrxID string) error
+	FindPayload(ctx context.Context, paymentTrxID string) (order.Order, error)
+	CreateDetail(ctx context.Context, orders order.Order) error
 }
 type Order struct {
 	order   OrderRepository
@@ -72,13 +75,22 @@ func (o *Order) Checkout(ctx context.Context, orders order.Order) (order.Order, 
 }
 
 // Placed is creating order from payment service
-func (o *Order) Placed(ctx context.Context, paymentTrxID string, items []order.Item, billing order.Billing) (order.Order, error) {
+func (o *Order) Placed(ctx context.Context, paymentTrxID string) (order.Order, error) {
 	//1. Check signature
 	//2. Update status order to placed
-	orders, err := o.order.Create(ctx, order.Order{})
+	err := o.order.UpdateStatusOrder(ctx, paymentTrxID)
+	if err != nil {
+		return order.Order{}, err
+	}
+	//3. Insert order detail
+	orders, err := o.order.FindPayload(ctx, paymentTrxID)
 	if err != nil {
 		return order.Order{}, err
 	}
 
-	return orders, nil
+	if err := o.order.CreateDetail(ctx, orders); err != nil {
+		return orders, err
+	}
+
+	return orders, err
 }

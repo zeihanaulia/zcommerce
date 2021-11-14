@@ -15,3 +15,11 @@ type Order struct {
 	CustomerName    string      `json:"customer_name"`
 	CustomerAddress string      `json:"customer_address"`
 }
+
+type OrderDetail struct {
+	ID       int32          `json:"id"`
+	OrderID  int32          `json:"order_id"`
+	Name     string         `json:"name"`
+	Quantity int32          `json:"quantity"`
+	Price    pgtype.Numeric `json:"price"`
+}

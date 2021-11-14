@@ -11,7 +11,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.5
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/jackc/pgconn v1.10.0
-	github.com/jackc/pgtype v1.8.1 // indirect
+	github.com/jackc/pgtype v1.8.1
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/lib/pq v1.10.3 // indirect

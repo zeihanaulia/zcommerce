@@ -9,6 +9,27 @@ import (
 	"github.com/jackc/pgtype"
 )
 
+const paidPayment = `-- name: PaidPayment :one
+UPDATE payments SET
+  types = $1,
+  status = $2
+WHERE trx_id = $3
+RETURNING id AS res
+`
+
+type PaidPaymentParams struct {
+	Types  string `json:"types"`
+	Status string `json:"status"`
+	TrxID  string `json:"trx_id"`
+}
+
+func (q *Queries) PaidPayment(ctx context.Context, arg PaidPaymentParams) (int32, error) {
+	row := q.db.QueryRow(ctx, paidPayment, arg.Types, arg.Status, arg.TrxID)
+	var res int32
+	err := row.Scan(&res)
+	return res, err
+}
+
 const registerPayments = `-- name: RegisterPayments :one
 INSERT INTO payments (
   trx_id,
@@ -50,4 +71,42 @@ func (q *Queries) RegisterPayments(ctx context.Context, arg RegisterPaymentsPara
 	var id int32
 	err := row.Scan(&id)
 	return id, err
+}
+
+const selectPayments = `-- name: SelectPayments :one
+SELECT
+  trx_id,
+  reference_trx_id,
+  types,
+  final_amount,
+  payloads,
+  status
+FROM
+  payments
+WHERE
+  trx_id = $1
+LIMIT 1
+`
+
+type SelectPaymentsRow struct {
+	TrxID          string         `json:"trx_id"`
+	ReferenceTrxID string         `json:"reference_trx_id"`
+	Types          string         `json:"types"`
+	FinalAmount    pgtype.Numeric `json:"final_amount"`
+	Payloads       pgtype.JSON    `json:"payloads"`
+	Status         string         `json:"status"`
+}
+
+func (q *Queries) SelectPayments(ctx context.Context, trxID string) (SelectPaymentsRow, error) {
+	row := q.db.QueryRow(ctx, selectPayments, trxID)
+	var i SelectPaymentsRow
+	err := row.Scan(
+		&i.TrxID,
+		&i.ReferenceTrxID,
+		&i.Types,
+		&i.FinalAmount,
+		&i.Payloads,
+		&i.Status,
+	)
+	return i, err
 }

@@ -1,4 +1,4 @@
--- name: OrdersTask :one
+-- name: CreateOrders :one
 INSERT INTO orders (
   trx_id,
   payment_trx_id,
@@ -14,5 +14,32 @@ VALUES (
   @status,
   @customer_name,
   @customer_address
+)
+RETURNING id;
+
+
+-- name: OrderPlaced :one
+UPDATE orders SET
+  status = @status
+WHERE payment_trx_id = @payment_trx_id
+RETURNING id AS res;
+
+-- name: SelectPayloads :one
+SELECT id, lock_items 
+FROM orders
+WHERE payment_trx_id = @payment_trx_id;
+
+-- name: CreateOrdersDetail :one
+INSERT INTO order_detail (
+  order_id,
+  name,
+  quantity,
+  price
+)
+VALUES (
+  @order_id,
+  @name,
+  @quantity,
+  @price
 )
 RETURNING id;

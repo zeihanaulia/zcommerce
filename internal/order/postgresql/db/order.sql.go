@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgtype"
 )
 
-const ordersTask = `-- name: OrdersTask :one
+const createOrders = `-- name: CreateOrders :one
 INSERT INTO orders (
   trx_id,
   payment_trx_id,
@@ -29,7 +29,7 @@ VALUES (
 RETURNING id
 `
 
-type OrdersTaskParams struct {
+type CreateOrdersParams struct {
 	TrxID           string      `json:"trx_id"`
 	PaymentTrxID    string      `json:"payment_trx_id"`
 	LockItems       pgtype.JSON `json:"lock_items"`
@@ -38,8 +38,8 @@ type OrdersTaskParams struct {
 	CustomerAddress string      `json:"customer_address"`
 }
 
-func (q *Queries) OrdersTask(ctx context.Context, arg OrdersTaskParams) (int32, error) {
-	row := q.db.QueryRow(ctx, ordersTask,
+func (q *Queries) CreateOrders(ctx context.Context, arg CreateOrdersParams) (int32, error) {
+	row := q.db.QueryRow(ctx, createOrders,
 		arg.TrxID,
 		arg.PaymentTrxID,
 		arg.LockItems,
@@ -50,4 +50,76 @@ func (q *Queries) OrdersTask(ctx context.Context, arg OrdersTaskParams) (int32, 
 	var id int32
 	err := row.Scan(&id)
 	return id, err
+}
+
+const createOrdersDetail = `-- name: CreateOrdersDetail :one
+INSERT INTO order_detail (
+  order_id,
+  name,
+  quantity,
+  price
+)
+VALUES (
+  $1,
+  $2,
+  $3,
+  $4
+)
+RETURNING id
+`
+
+type CreateOrdersDetailParams struct {
+	OrderID  int32          `json:"order_id"`
+	Name     string         `json:"name"`
+	Quantity int32          `json:"quantity"`
+	Price    pgtype.Numeric `json:"price"`
+}
+
+func (q *Queries) CreateOrdersDetail(ctx context.Context, arg CreateOrdersDetailParams) (int32, error) {
+	row := q.db.QueryRow(ctx, createOrdersDetail,
+		arg.OrderID,
+		arg.Name,
+		arg.Quantity,
+		arg.Price,
+	)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
+const orderPlaced = `-- name: OrderPlaced :one
+UPDATE orders SET
+  status = $1
+WHERE payment_trx_id = $2
+RETURNING id AS res
+`
+
+type OrderPlacedParams struct {
+	Status       string `json:"status"`
+	PaymentTrxID string `json:"payment_trx_id"`
+}
+
+func (q *Queries) OrderPlaced(ctx context.Context, arg OrderPlacedParams) (int32, error) {
+	row := q.db.QueryRow(ctx, orderPlaced, arg.Status, arg.PaymentTrxID)
+	var res int32
+	err := row.Scan(&res)
+	return res, err
+}
+
+const selectPayloads = `-- name: SelectPayloads :one
+SELECT id, lock_items 
+FROM orders
+WHERE payment_trx_id = $1
+`
+
+type SelectPayloadsRow struct {
+	ID        int32       `json:"id"`
+	LockItems pgtype.JSON `json:"lock_items"`
+}
+
+func (q *Queries) SelectPayloads(ctx context.Context, paymentTrxID string) (SelectPayloadsRow, error) {
+	row := q.db.QueryRow(ctx, selectPayloads, paymentTrxID)
+	var i SelectPayloadsRow
+	err := row.Scan(&i.ID, &i.LockItems)
+	return i, err
 }

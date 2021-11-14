@@ -17,7 +17,7 @@ type Status string
 
 // Order is represent object for creating new order
 type Order struct {
-	ID           string  `json:"id"`
+	ID           int32   `json:"id"`
 	TrxID        string  `json:"trx_id"`
 	PaymentTrxID string  `json:"payment_trx_id"`
 	Items        []Item  `json:"items"`

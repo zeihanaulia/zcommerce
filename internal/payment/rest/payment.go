@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
+	"path"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/zeihanaulia/zcommerce/internal/payment"
@@ -13,6 +15,8 @@ import (
 
 type PaymentService interface {
 	Register(ctx context.Context, params payment.Payment) (string, error)
+	ByPaymentTrxID(ctx context.Context, paymentTrxID string) (payment.Payment, error)
+	OPOPaid(ctx context.Context, paymentTrxID string) error
 }
 
 type PaymentHandler struct {
@@ -25,10 +29,59 @@ func NewPaymentHandler(payment PaymentService) *PaymentHandler {
 
 func (p *PaymentHandler) Register(r chi.Router) {
 	r.Route("/payment", func(r chi.Router) {
-		r.Get("/{trxId}", func(rw http.ResponseWriter, r *http.Request) {
-			fmt.Println("payment page")
+		r.Get("/{trxId}", func(w http.ResponseWriter, r *http.Request) {
+			paymentTrxID := chi.URLParam(r, "trxId")
+			resp, err := p.payment.ByPaymentTrxID(r.Context(), paymentTrxID)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			var filepath = path.Join("views/payment/", "billing.html")
+			tmpl, err := template.ParseFiles(filepath)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			var data = map[string]interface{}{
+				"title":          "Tagihan",
+				"name":           resp.CustomerDetail.Name,
+				"payment_trx_id": resp.TransactionDetail.PaymentTrxID,
+			}
+
+			err = tmpl.Execute(w, data)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+		})
+
+		r.Get("/thankyou/{trxId}", func(w http.ResponseWriter, r *http.Request) {
+			paymentTrxID := chi.URLParam(r, "trxId")
+			resp, err := p.payment.ByPaymentTrxID(r.Context(), paymentTrxID)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			var filepath = path.Join("views/payment/", "thankyou.html")
+			tmpl, err := template.ParseFiles(filepath)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			var data = map[string]interface{}{
+				"title":          "Tagihan",
+				"name":           resp.CustomerDetail.Name,
+				"payment_trx_id": resp.TransactionDetail.PaymentTrxID,
+			}
+
+			err = tmpl.Execute(w, data)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 		})
 		r.Post("/register", p.register)
+		r.Post("/opo", p.paidopo)
 	})
 }
 
@@ -97,4 +150,19 @@ func (p *PaymentHandler) register(w http.ResponseWriter, r *http.Request) {
 			PaymentTrxID: paymentTrxID,
 		},
 	}, http.StatusOK)
+}
+
+type PaidOPORequest struct {
+	PaymentTrxID string `json:"payment_trx_id,omitempty"`
+}
+
+func (p *PaymentHandler) paidopo(w http.ResponseWriter, r *http.Request) {
+	var req PaidOPORequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println(err)
+		return
+	}
+
+	fmt.Println(req)
+	p.payment.OPOPaid(r.Context(), req.PaymentTrxID)
 }

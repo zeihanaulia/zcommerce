@@ -23,6 +23,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/spf13/cobra"
 	"github.com/zeihanaulia/zcommerce/adapter"
+	"github.com/zeihanaulia/zcommerce/internal/payment/opo"
+	"github.com/zeihanaulia/zcommerce/internal/payment/order"
 	"github.com/zeihanaulia/zcommerce/internal/payment/postgresql"
 	"github.com/zeihanaulia/zcommerce/internal/payment/rest"
 	"github.com/zeihanaulia/zcommerce/internal/payment/service"
@@ -48,9 +50,11 @@ to quickly create a Cobra application.`,
 
 		// Repository
 		payments := postgresql.NewPayment(db)
+		opos := opo.NewOPO()
+		orders := order.NewOrder("http://localhost:8002")
 
 		// Service
-		svc := service.NewPayment(payments)
+		svc := service.NewPayment(payments, opos, orders)
 
 		// Handler
 		r := chi.NewRouter()

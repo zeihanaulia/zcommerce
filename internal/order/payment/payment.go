@@ -63,7 +63,7 @@ func paymentToRegister(payments order.Payment) RegisterRequest {
 			Name:    payments.CustomerDetail.Name,
 			Address: payments.CustomerDetail.Address,
 		},
-		ItemDetails: nil,
+		ItemDetails: itemDetails,
 	}
 }
 
@@ -85,6 +85,7 @@ func (p *Payment) Register(ctx context.Context, payments order.Payment) (string,
 
 	var res RegisterResponse
 	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		fmt.Println(err)
 		return "", err
 	}
 

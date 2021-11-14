@@ -12,7 +12,7 @@ import (
 )
 
 type OrderService interface {
-	Placed(ctx context.Context, paymentTrxID string, items []order.Item, billing order.Billing) (order.Order, error)
+	Placed(ctx context.Context, paymentTrxID string) (order.Order, error)
 	Checkout(ctx context.Context, args order.Order) (order.Order, error)
 }
 
@@ -27,7 +27,7 @@ func NewOrderHandler(svc OrderService) *OrderHandler {
 func (o *OrderHandler) Register(r chi.Router) {
 	r.Route("/order", func(r chi.Router) {
 		r.Post("/checkout", o.checkout)
-		r.Post("/placed", o.create)
+		r.Post("/placed", o.placed)
 	})
 }
 
@@ -43,30 +43,6 @@ func toItemDetail(req CreateOrderRequest) []order.Item {
 		})
 	}
 	return itemDetails
-}
-
-func (o *OrderHandler) checkout(w http.ResponseWriter, r *http.Request) {
-	var req CreateOrderRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Println(err)
-		return
-	}
-
-	itemDetails := toItemDetail(req)
-	resp, err := o.svc.Checkout(r.Context(), order.Order{
-		Items: itemDetails,
-		Billing: order.Billing{
-			Name:    req.Billing.Name,
-			Address: req.Billing.Address,
-		},
-		Status: "draft",
-	})
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	http.Redirect(w, r, fmt.Sprintf("http://localhost:8003/payment/%s", resp.PaymentTrxID), http.StatusSeeOther)
 }
 
 // CreateOrderRequest defines request for creating order
@@ -118,14 +94,46 @@ type CreateOrderResponse struct {
 	} `json:"data"`
 }
 
-func (o *OrderHandler) create(w http.ResponseWriter, r *http.Request) {
+func (o *OrderHandler) checkout(w http.ResponseWriter, r *http.Request) {
 	var req CreateOrderRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println(err)
 		return
 	}
 
-	resp, err := o.svc.Placed(r.Context(), "", req.GetItems(), req.GetBilling())
+	itemDetails := toItemDetail(req)
+	resp, err := o.svc.Checkout(r.Context(), order.Order{
+		Items: itemDetails,
+		Billing: order.Billing{
+			Name:    req.Billing.Name,
+			Address: req.Billing.Address,
+		},
+		Status: "draft",
+	})
 	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	redirect := fmt.Sprintf("http://localhost:8003/payment/%s", resp.PaymentTrxID)
+	fmt.Println(redirect)
+	http.Redirect(w, r, redirect, http.StatusSeeOther)
+}
+
+type OrderPlacedRequest struct {
+	PaymentTrxID string `json:"payment_trx_id"`
+}
+
+func (o *OrderHandler) placed(w http.ResponseWriter, r *http.Request) {
+	var req OrderPlacedRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		fmt.Println("decoder.order.placed: ", err)
+		return
+	}
+	fmt.Println("Order Placed")
+	resp, err := o.svc.Placed(r.Context(), req.PaymentTrxID)
+	if err != nil {
+		fmt.Println("scv.order.placed: ", err)
 		return
 	}
 
