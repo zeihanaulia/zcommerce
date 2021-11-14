@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/golang-jwt/jwt"
+
 	"github.com/zeihanaulia/zcommerce/internal/order"
 )
 
@@ -25,9 +28,45 @@ func NewOrderHandler(svc OrderService) *OrderHandler {
 }
 
 func (o *OrderHandler) Register(r chi.Router) {
+	r.Use(Authenticator)
 	r.Route("/order", func(r chi.Router) {
 		r.Post("/checkout", o.checkout)
 		r.Post("/placed", o.placed)
+	})
+}
+
+func Authenticator(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// token, _, err := FromContext(r.Context())
+		header := r.Header.Get("Authorization")
+		authHeaders := strings.Split(header, " ")
+		if len(authHeaders) < 2 {
+			http.Error(w, http.StatusText(401), 401)
+			return
+		}
+		tokenString := authHeaders[1]
+
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			}
+			return []byte("rahasia"), nil
+		})
+		if err != nil {
+			fmt.Println(err)
+			http.Error(w, http.StatusText(401), 401)
+			return
+		}
+
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			fmt.Println(claims["foo"], claims["nbf"])
+		} else {
+			http.Error(w, http.StatusText(401), 401)
+			return
+		}
+
+		// Token is authenticated, pass it through
+		next.ServeHTTP(w, r)
 	})
 }
 

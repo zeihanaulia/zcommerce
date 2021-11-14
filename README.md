@@ -1,21 +1,23 @@
 # Basic App Development
 
+Ecommerce workflow sederhana, handle order dan payment page.
+
 ## Feature
 
-- Account Service
 - Order Service
     - Checkout
-        - [] register to payment service
-        - [] store and locking items
-        - [] redirect to payment service page
+        - [x] register to payment service
+        - [x] store and locking items
+        - [x] redirect to payment service page
     - Placed
-        - [] update order to order placed
+        - [x] update order to order placed
 - Payment Service
     - Register Payment
-        - store and locking items
+        - [x] store and locking items
     - Payment Page
-        - choose payment type
-        - simulating payment process
+        - [x] choose payment type
+        - [x] simulating payment process
+- Account Service
 - Catalog Service
 
 ## Migrate
@@ -52,18 +54,3 @@ migrate create -ext sql -dir db/migrations/order -seq create_order_detail_table
 ```bash
 migrate -database ${POSTGRESQL_URL} -path db/migrations/order up
 ```
-
-## Tools
-
-- Authentication & Authorization
-- API Gateway
-
-### Authentication & Authorization
-
-### API Gateway
-
-### OpenAPI
-
-OpenAPI adalah Spesifikasi
-
-Swagger adalah tools untuk mengimplementasi spesifikasi
