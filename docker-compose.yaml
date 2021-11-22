@@ -1,0 +1,33 @@
+version: '3.5'
+
+services:
+
+  db:
+    image: postgres
+    restart: always
+    ports:
+        - "5432:5432"
+    environment:
+        - POSTGRES_USER=sa
+        - POSTGRES_PASSWORD=zcommerce
+        - POSTGRES_DB=commerce
+        - PGDATA=/data/postgres
+    volumes:
+      - postgres:/data/postgres  
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: zeihanaulia@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+      
+    
+volumes:
+    postgres:
+    pgadmin:

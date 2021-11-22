@@ -9,7 +9,6 @@ require (
 
 require (
 	github.com/go-chi/chi/v5 v5.0.5
-	github.com/go-chi/jwtauth/v5 v5.0.2
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/jackc/pgconn v1.10.0
