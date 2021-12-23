@@ -14,10 +14,10 @@ import (
 func NewPostgreSQL() (*pgxpool.Pool, error) {
 
 	// Just hardcoded, we will improve using envvar
-	databaseHost := "localhost"
+	databaseHost := "db"
 	databasePort := "5432"
-	databaseUsername := "root"
-	databasePassword := "root"
+	databaseUsername := "sa"
+	databasePassword := "zcommerce"
 	databaseName := "commerce"
 	databaseSSLMode := "disable"
 

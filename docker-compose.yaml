@@ -26,7 +26,21 @@ services:
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     volumes:
       - pgadmin:/var/lib/pgadmin
-      
+
+  account:
+    build:
+      context: "./deployments/docker/account"
+    restart: always
+    command: rest
+    environment: 
+        - DB_MASTER_DSN=pgsql:host=localhost;port=5432;dbname=testdb;user=bruce;password=mypass
+        - DB_REPLICA_DSN=pgsql:host=localhost;port=5432;dbname=testdb;user=bruce;password=mypass
+    # volumes: 
+    #     - ./config:/opt/{{cookiecutter.app_name}}/config
+    ports: 
+        - "8004:8004"
+        # - "7070:7070" # metrics
+
     
 volumes:
     postgres:
