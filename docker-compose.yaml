@@ -27,21 +27,51 @@ services:
     volumes:
       - pgadmin:/var/lib/pgadmin
 
+  order:
+    build:
+      context: .
+      dockerfile: "./deployments/docker/order/Dockerfile"
+    restart: always
+    command: order-rest
+    environment: 
+        - DB_MASTER_DSN=pgsql:host=db;port=5432;dbname=commerce;user=sa;password=zcommerce
+        - DB_REPLICA_DSN=pgsql:host=db;port=5432;dbname=commerce;user=sa;password=zcommerce
+    depends_on:
+      - db
+    ports: 
+        - "8002:8002"
+        # - "7070:7070" # metrics
+
+  payment:
+    build:
+      context: .
+      dockerfile: "./deployments/docker/payment/Dockerfile"
+    restart: always
+    command: payment-rest
+    environment: 
+        - DB_MASTER_DSN=pgsql:host=db;port=5432;dbname=commerce;user=sa;password=zcommerce
+        - DB_REPLICA_DSN=pgsql:host=db;port=5432;dbname=commerce;user=sa;password=zcommerce
+    depends_on:
+      - db
+    ports: 
+        - "8003:8003"
+        # - "7070:7070" # metrics
+
   account:
     build:
-      context: "./deployments/docker/account"
+      context: .
+      dockerfile: "./deployments/docker/account/Dockerfile"
     restart: always
-    command: rest
+    command: account-rest
     environment: 
-        - DB_MASTER_DSN=pgsql:host=localhost;port=5432;dbname=testdb;user=bruce;password=mypass
-        - DB_REPLICA_DSN=pgsql:host=localhost;port=5432;dbname=testdb;user=bruce;password=mypass
-    # volumes: 
-    #     - ./config:/opt/{{cookiecutter.app_name}}/config
+        - DB_MASTER_DSN=pgsql:host=db;port=5432;dbname=commerce;user=sa;password=zcommerce
+        - DB_REPLICA_DSN=pgsql:host=db;port=5432;dbname=commerce;user=sa;password=zcommerce
+    depends_on:
+      - db
     ports: 
         - "8004:8004"
         # - "7070:7070" # metrics
 
-    
 volumes:
     postgres:
     pgadmin:

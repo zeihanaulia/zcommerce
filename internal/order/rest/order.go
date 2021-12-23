@@ -28,10 +28,12 @@ func NewOrderHandler(svc OrderService) *OrderHandler {
 }
 
 func (o *OrderHandler) Register(r chi.Router) {
-	r.Use(Authenticator)
-	r.Route("/order", func(r chi.Router) {
-		r.Post("/checkout", o.checkout)
-		r.Post("/placed", o.placed)
+	r.Group(func(r chi.Router) {
+		r.Use(Authenticator)
+		r.Route("/order", func(r chi.Router) {
+			r.Post("/checkout", o.checkout)
+			r.Post("/placed", o.placed)
+		})
 	})
 }
 

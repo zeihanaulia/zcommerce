@@ -5,6 +5,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflag
 
 FROM gcr.io/distroless/base-debian11 as production
 COPY --from=build /app/main /
-EXPOSE 8004
+EXPOSE 8002
 
 ENTRYPOINT [ "./main" ]
