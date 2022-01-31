@@ -22,11 +22,13 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/spf13/cobra"
+
 	"github.com/zeihanaulia/zcommerce/adapter"
 	"github.com/zeihanaulia/zcommerce/internal/order/payment"
 	"github.com/zeihanaulia/zcommerce/internal/order/postgresql"
 	"github.com/zeihanaulia/zcommerce/internal/order/rest"
 	"github.com/zeihanaulia/zcommerce/internal/order/service"
+	"go.elastic.co/apm/module/apmchiv5"
 )
 
 // orderRestCmd represents the orderRest command
@@ -36,6 +38,8 @@ var orderRestCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		r := chi.NewRouter()
 
+		r.Use(apmchiv5.Middleware())
+
 		// Infrastructure
 		db, err := adapter.NewPostgreSQL()
 		if err != nil {
@@ -44,7 +48,7 @@ var orderRestCmd = &cobra.Command{
 
 		// Repository
 		orders := postgresql.NewOrder(db)
-		payments := payment.NewPayment("http://localhost:8003")
+		payments := payment.NewPayment("http://payment:8003")
 
 		// Service
 		scv := service.NewOrder(orders, payments)

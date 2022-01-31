@@ -26,6 +26,7 @@ import (
 	"github.com/zeihanaulia/zcommerce/internal/account/postgresql"
 	"github.com/zeihanaulia/zcommerce/internal/account/rest"
 	"github.com/zeihanaulia/zcommerce/internal/account/service"
+	"go.elastic.co/apm/module/apmhttp"
 )
 
 // accountRestCmd represents the accountRest command
@@ -76,7 +77,7 @@ to quickly create a Cobra application.`,
 		// Server
 		address := "0.0.0.0:8004"
 		srv := &http.Server{
-			Handler:           r,
+			Handler:           apmhttp.Wrap(r),
 			Addr:              address,
 			ReadTimeout:       1 * time.Second,
 			ReadHeaderTimeout: 1 * time.Second,

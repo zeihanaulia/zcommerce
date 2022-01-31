@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/zeihanaulia/zcommerce/internal/order"
+	"go.elastic.co/apm"
+	"go.elastic.co/apm/module/apmhttp"
 )
 
 type Payment struct {
@@ -74,12 +77,33 @@ type RegisterResponse struct {
 }
 
 func (p *Payment) Register(ctx context.Context, payments order.Payment) (string, error) {
+	span, _ := apm.StartSpan(ctx, "PaymentService.Register", "custom")
+	defer span.End()
+
+	traceContext := span.TraceContext()
+	traceparent := apmhttp.FormatTraceparentHeader(traceContext)
+	tracestate := traceContext.State.String()
+	log.Println(tracestate, traceContext, traceparent)
+
 	// TODO: add tracing
 	postBody, _ := json.Marshal(paymentToRegister(payments))
 	responseBody := bytes.NewBuffer(postBody)
-	resp, err := http.Post(fmt.Sprintf("%s/payment/register", p.host), "application/json", responseBody)
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/payment/register", p.host), responseBody)
 	if err != nil {
-		log.Fatalf("An Error Occured %v", err)
+		log.Printf("[ERROR] cannot requested to payment service, err: %v", err)
+		return "", errors.New("cannot requested to payment service")
+	}
+
+	req.Header = http.Header{
+		"Content-Type": []string{"application/json"},
+		"Traceparent":  []string{traceparent},
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Printf("[ERROR] cannot requested to payment service, err: %v", err)
+		return "", errors.New("cannot requested to payment service")
 	}
 	defer resp.Body.Close()
 

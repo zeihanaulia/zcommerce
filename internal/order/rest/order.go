@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt"
+	"go.elastic.co/apm"
 
 	"github.com/zeihanaulia/zcommerce/internal/order"
 )
@@ -136,6 +137,9 @@ type CreateOrderResponse struct {
 }
 
 func (o *OrderHandler) checkout(w http.ResponseWriter, r *http.Request) {
+	span, ctx := apm.StartSpan(r.Context(), "Handler.Order.Checkout", "custom")
+	defer span.End()
+
 	var req CreateOrderRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Println(err)
@@ -143,7 +147,7 @@ func (o *OrderHandler) checkout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	itemDetails := toItemDetail(req)
-	resp, err := o.svc.Checkout(r.Context(), order.Order{
+	resp, err := o.svc.Checkout(ctx, order.Order{
 		Items: itemDetails,
 		Billing: order.Billing{
 			Name:    req.Billing.Name,
@@ -152,12 +156,11 @@ func (o *OrderHandler) checkout(w http.ResponseWriter, r *http.Request) {
 		Status: "draft",
 	})
 	if err != nil {
-		log.Println(err)
+		log.Printf("[ERROR] system error, err: %v", err)
 		return
 	}
 
 	redirect := fmt.Sprintf("http://localhost:8003/payment/%s", resp.PaymentTrxID)
-	fmt.Println(redirect)
 	http.Redirect(w, r, redirect, http.StatusSeeOther)
 }
 

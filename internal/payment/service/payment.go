@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/zeihanaulia/zcommerce/internal/payment"
+	"go.elastic.co/apm"
 )
 
 type OPORepository interface {
@@ -32,6 +33,9 @@ func NewPayment(payment PaymentRepository, opo OPORepository, order OrderReposit
 }
 
 func (p *Payment) Register(ctx context.Context, payments payment.Payment) (string, error) {
+	span, ctx := apm.StartSpan(ctx, "Payment.Register", "custom")
+	defer span.End()
+
 	payments.GenerateTrxID()
 	payments.SumFinalAmount()
 	if err := p.payment.Register(ctx, payments); err != nil {
@@ -41,10 +45,16 @@ func (p *Payment) Register(ctx context.Context, payments payment.Payment) (strin
 }
 
 func (p *Payment) ByPaymentTrxID(ctx context.Context, paymentTrxID string) (payment.Payment, error) {
+	span, ctx := apm.StartSpan(ctx, "Payment.ByPaymentTrxID", "custom")
+	defer span.End()
+
 	return p.payment.FindByPaymentTrxID(ctx, paymentTrxID)
 }
 
 func (p *Payment) OPOPaid(ctx context.Context, paymentTrxID string) error {
+	span, ctx := apm.StartSpan(ctx, "Payment.OPOPaid", "custom")
+	defer span.End()
+
 	// 1. Send to opo
 	opoTrxID, err := p.opo.Paid(ctx, paymentTrxID)
 	if err != nil {

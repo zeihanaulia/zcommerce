@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/zeihanaulia/zcommerce/internal/payment"
+	"go.elastic.co/apm"
 )
 
 type PaymentService interface {
@@ -30,8 +31,11 @@ func NewPaymentHandler(payment PaymentService) *PaymentHandler {
 func (p *PaymentHandler) Register(r chi.Router) {
 	r.Route("/payment", func(r chi.Router) {
 		r.Get("/{trxId}", func(w http.ResponseWriter, r *http.Request) {
+			span, ctx := apm.StartSpan(r.Context(), "Payment.Page", "custom")
+			defer span.End()
+
 			paymentTrxID := chi.URLParam(r, "trxId")
-			resp, err := p.payment.ByPaymentTrxID(r.Context(), paymentTrxID)
+			resp, err := p.payment.ByPaymentTrxID(ctx, paymentTrxID)
 			if err != nil {
 				fmt.Println(err)
 			}

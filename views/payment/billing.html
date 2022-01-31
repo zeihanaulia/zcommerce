@@ -39,6 +39,7 @@
       <div class="row mb-4">
         <div class="col-lg-8 mx-auto text-center">
           <h1 class="display-6">Tagihan: {{.name}}</h1>
+          <h1 class="display-6">Transaksi ID: {{.payment_trx_id}}</h1>
         </div>
       </div>
       <!-- End -->
@@ -65,6 +66,21 @@
                 </ul>
               </div>
               <!-- End -->
+              
+              <!-- Paypal info -->
+              <div id="paypal" class="tab-pane fade pt-3">
+                <h6 class="pb-2">Saldo OPO</h6>
+                <div class="form-group ">
+                    Rp. 1.000.000
+                </div>
+                <p>
+                  <button type="button" id="bayar-pake-opo" class="btn btn-primary ">
+                    <i class="fab fa-paypal mr-2"></i> Bayar </button>
+                </p>
+                <p class="text-muted"> Note: After clicking on the button, you will be directed to a secure gateway for payment. After completing the payment process, you will be redirected back to the website to view details of your order. </p>
+              </div>
+              <!-- End -->
+              
               <!-- Credit card form content -->
               <div class="tab-content">
                 <!-- credit card info-->
@@ -122,19 +138,6 @@
               </div>
               <!-- End -->
               
-              <!-- Paypal info -->
-              <div id="paypal" class="tab-pane fade pt-3">
-                <h6 class="pb-2">Saldo OPO</h6>
-                <div class="form-group ">
-                    Rp. 1.000.000
-                </div>
-                <p>
-                  <button type="button" id="bayar-pake-opo" class="btn btn-primary ">
-                    <i class="fab fa-paypal mr-2"></i> Bayar </button>
-                </p>
-                <p class="text-muted"> Note: After clicking on the button, you will be directed to a secure gateway for payment. After completing the payment process, you will be redirected back to the website to view details of your order. </p>
-              </div>
-              <!-- End -->
               <!-- bank transfer info -->
               <div id="net-banking" class="tab-pane fade pt-3">
                 <div class="form-group ">

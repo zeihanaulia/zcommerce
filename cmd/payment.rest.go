@@ -28,6 +28,7 @@ import (
 	"github.com/zeihanaulia/zcommerce/internal/payment/postgresql"
 	"github.com/zeihanaulia/zcommerce/internal/payment/rest"
 	"github.com/zeihanaulia/zcommerce/internal/payment/service"
+	"go.elastic.co/apm/module/apmchiv5"
 )
 
 // paymentRestCmd represents the paymentRest command
@@ -58,6 +59,7 @@ to quickly create a Cobra application.`,
 
 		// Handler
 		r := chi.NewRouter()
+		r.Use(apmchiv5.Middleware())
 		handler := rest.NewPaymentHandler(svc)
 		handler.Register(r)
 

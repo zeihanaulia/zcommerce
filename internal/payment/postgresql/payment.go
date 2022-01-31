@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgtype"
 	"github.com/zeihanaulia/zcommerce/internal/payment"
 	"github.com/zeihanaulia/zcommerce/internal/payment/postgresql/db"
+	"go.elastic.co/apm"
 )
 
 // Payment represent orders tables
@@ -22,6 +23,9 @@ func NewPayment(d db.DBTX) *Payment {
 
 // Register
 func (p *Payment) Register(ctx context.Context, payments payment.Payment) error {
+	span, ctx := apm.StartSpan(ctx, "Postgresql.Register", "custom")
+	defer span.End()
+
 	payloads, _ := payments.ToJSON()
 	jsn := pgtype.JSON{}
 	jsn.Set(payloads)
@@ -41,6 +45,9 @@ func (p *Payment) Register(ctx context.Context, payments payment.Payment) error 
 }
 
 func (p *Payment) FindByPaymentTrxID(ctx context.Context, paymentTrxID string) (payment.Payment, error) {
+	span, ctx := apm.StartSpan(ctx, "Postgresql.FindByPaymentTrxID", "custom")
+	defer span.End()
+
 	res, err := p.q.SelectPayments(ctx, paymentTrxID)
 	if err != nil {
 		return payment.Payment{}, err
@@ -71,6 +78,9 @@ func (p *Payment) FindByPaymentTrxID(ctx context.Context, paymentTrxID string) (
 }
 
 func (p *Payment) PaidPayment(ctx context.Context, paymentTrxID string) error {
+	span, ctx := apm.StartSpan(ctx, "Postgresql.PaidPayment", "custom")
+	defer span.End()
+
 	_, err := p.q.PaidPayment(ctx, db.PaidPaymentParams{
 		Types:  "opo",
 		Status: "paid",
